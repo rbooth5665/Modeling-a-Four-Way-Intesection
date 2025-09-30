@@ -1,12 +1,12 @@
 public class Vehicle {
 int size;
 float accel;
-char type;
+String type;
 
 
 
 //getter and setter methods
-    public char getType() {
+    public String getType() {
         return type;
     }
     public float getAccel() {
@@ -21,7 +21,7 @@ class Motorcycle extends Vehicle {
     //Vehicle Constructors
     Motorcycle (){}
     Motorcycle (int s,float a) {
-        this.type = 'm';
+        this.type = "Motorcycle";
         this.size = s;
         this.accel = a;
     }
@@ -30,7 +30,7 @@ class Motorcycle extends Vehicle {
 class Truck extends Vehicle {
     Truck (){}
     Truck (int s, float a) {
-        this.type = 't';
+        this.type = "Truck";
         this.size = s;
         this.accel = a;
     }
@@ -39,7 +39,7 @@ class Truck extends Vehicle {
 class Car extends Vehicle {
     Car (){}
     Car (int s, float a) {
-        this.type = 'c';
+        this.type = "Car";
         this.size = s;
         this.accel = a;
     }
