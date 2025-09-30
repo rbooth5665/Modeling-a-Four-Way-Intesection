@@ -1,3 +1,5 @@
+package org.example;
+
 public class Intersection {
     //creates 4 separate lights for each direction
     Boolean north;

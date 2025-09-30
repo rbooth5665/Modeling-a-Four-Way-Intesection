@@ -1,3 +1,5 @@
+package org.example;
+
 import java.util.Random;
 import java.util.Scanner;
 
@@ -25,14 +27,21 @@ public class Main {
         Random rand = new Random();
         Scanner in = new Scanner(System.in);
 
-        //create an intersection object. There will only be one
+        //Creates Lanes and an intersection
         Intersection intersection = new Intersection();
-        //create 4 lanes; 1 for each direction
         Lane north = new Lane(intersection);
         Lane south = new Lane(intersection);
         Lane west = new Lane(intersection);
         Lane east = new Lane(intersection);
 
+        System.out.print("What hour would you like to start monitoring? (choose an hour incremented time 0-23)");
+        int start = in.nextInt();
+        System.out.println("What hour would you like to stop monitoring on? (choose an hour increment greater than your start time)");
+        int end = in.nextInt();
+
+        //the random generation will depend on the hours chosen.
+
+        north.generate(480,5, 8, 'n');
 
 
 

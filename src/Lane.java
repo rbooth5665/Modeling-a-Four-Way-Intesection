@@ -1,16 +1,12 @@
+package org.example;
+
+import org.apache.commons.math3.distribution.PoissonDistribution;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Timer;
 
 public class Lane {
-    //handles the specific lane queues
-    Queue<Vehicle> leftTurn = new LinkedList<>();
-    Queue<Vehicle> laneOne = new LinkedList<>();
-    Queue<Vehicle> laneTwo = new LinkedList<>();
-    Queue<Vehicle> rightTurn = new LinkedList<>();
-
-    //access to lights at intersection through intersection object
-    Intersection i;
-
+   //Real world data for Bells Ferry/Highway 92 traffic; December 2024
     static final private int[][] SR92 = {
             //East Travel "Average Hourly Volume" from GDOT
             {76, 48, 56, 69, 144, 409, 1124, 1736, 1473, 1249, 1122, 1119, 1145, 1182, 1211, 1244, 1446, 1696, 1336, 745, 512, 374, 249, 120},
@@ -23,6 +19,19 @@ public class Lane {
             //South Travel "Average Hourly Volume" from GDOT
             {82, 50, 38, 55, 126, 308, 672, 941, 876, 754, 690, 685, 772, 820, 912, 986, 1126, 1152, 1064, 858, 592, 450, 246, 156}
     };
+
+
+    //handles the specific lane queues
+    Queue<Vehicle> leftTurn = new LinkedList<>();
+    Queue<Vehicle> laneOne = new LinkedList<>();
+    Queue<Vehicle> laneTwo = new LinkedList<>();
+    Queue<Vehicle> rightTurn = new LinkedList<>();
+
+    //access to lights at intersection through intersection object
+    Intersection i;
+    Timer t = new Timer();
+
+
 
     //Constructors
     Lane(Intersection intersection) {
@@ -78,18 +87,34 @@ public class Lane {
         System.out.println("this direction of travel has: " +m+ " Motorcycles, "+c+" Cars, and "+t+" Large Trucks.");
     }
 
-    //returns the total size of each specific lane in the lane cluster
-    //This will be used to decide which of the two straight lanes a car will use
-    //If a car is turning, it must go into turn lane
-
-    //factorial implementation for Poisson Distribution using long data type to handle large values
-    public static long factorial (int a) {
-        long r = 1;
-        for(int i = 1; i <= a; i++) {
-            r *= i;
+    //computes size of each lane from left turn -> right turn, returns it as an array
+    public int[] updateSize (int[] s) {
+        int size = 0;
+        for(Vehicle v: leftTurn) {
+            size += v.getSize();
         }
-        return r;
+        s[0] = size;
+        size = 0;
+
+        for(Vehicle v: laneOne) {
+            size += v.getSize();
+        }
+        s[1] = size;
+        size = 0;
+
+        for(Vehicle v: laneTwo) {
+            size += v.getSize();
+        }
+        s[2] = size;
+        size = 0;
+
+        for(Vehicle v: rightTurn) {
+            size += v.getSize();
+        }
+        s[3] = size;
+        return s;
     }
+
 
     //Converts the cars per hour to cars per minute as a whole number
     private static int hourToMinuteRate(int c) {
@@ -136,33 +161,21 @@ public class Lane {
         return sum/60;
     }
 
-    /*
-    implements poisson distribution, where x is the expected number of cars
-    l (lambda) is the average rate of car arrival over an interval of time
-    and e is eulers number
-     */
-    public static double poissonDistribution (int x, double l) {
-        //poissons alg -> P(x) = (l^x * e^ -l)/factorial(x)
-        //calculate the top half
-        double lam = Math.pow(l, x);
-        double euler = Math.pow(Math.E, -l);
-        double top = lam * euler;
-
-        //returns poissons probability
-        return top/factorial(x);
-    }
-
     //car generator for lanes
     public void generate (int cars, int start, int end, char d) {
-        /*
-        Method takes the number of desired cars (per hour), converts to cars per minute
-        calculates the lambda from actual road data between start and end hours, then generates
-        poisson percentage. With that, it will then begin to generate vehicles and add them to the lanes
-         */
         int carsPerMinute = hourToMinuteRate(cars);
-        double poisson = poissonDistribution(carsPerMinute, getLambda(d, start, end));
+        //creates poisson object with apache libraries, stores calculated mean
+        PoissonDistribution p = new PoissonDistribution(getLambda(d, start, end));
 
+        //calculates rounded poisson probability
+        int poisson = (int)(p.probability(carsPerMinute) * 100);
 
+        //works to generate vehicle objects
+        //array to store changing size of each lane
+        int[] sizes = new int[4];
+        for(int i = 0; i < cars; i++) {
+
+        }
         //now that poisson has been calculated, begin creating cars and dispersing them to the lanes.
         //weight the turn lanes to be less than the main lanes of travel
     }

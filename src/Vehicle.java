@@ -1,11 +1,13 @@
+package org.example;
+
 public class Vehicle {
-int size;
-float accel;
-String type;
+    int size;
+    float accel;
+    String type;
 
 
 
-//getter and setter methods
+    //getter and setter methods
     public String getType() {
         return type;
     }

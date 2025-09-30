@@ -1,3 +1,5 @@
+package org.example;
+
 //class that holds all data collection methods
 public class Sieve {
     //flow rate
