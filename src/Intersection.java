@@ -35,6 +35,19 @@ public class Intersection {
     }
 
 
-    //Light cycle algorithm (Green split?)
+    //Light cycle algorithm (Green split?) takes all lane sizes in, factors to set light
+    public void greenSplit(int[] n, int[] s, int[] e, int[] w) {
+       //hardcoded as the size arrays will always be in the same format. Gathers size of straight moving lanes
+        int eastWest = e[1] + e[2] + w[1] + w[2];
+        int northSouth = n[1] + n[2] + s[1] + s[2];
 
+        if(eastWest > northSouth) {
+            //set east-west light for a calculated amount of time
+        }
+        else {
+            //set north-south light for calculated amount of time
+        }
+
+
+    }
 }

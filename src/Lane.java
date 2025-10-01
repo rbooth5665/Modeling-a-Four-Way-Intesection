@@ -3,7 +3,7 @@ package org.example;
 import org.apache.commons.math3.distribution.PoissonDistribution;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Timer;
+import java.util.Random;
 
 public class Lane {
    //Real world data for Bells Ferry/Highway 92 traffic; December 2024
@@ -26,25 +26,23 @@ public class Lane {
     Queue<Vehicle> laneOne = new LinkedList<>();
     Queue<Vehicle> laneTwo = new LinkedList<>();
     Queue<Vehicle> rightTurn = new LinkedList<>();
+    int[] size = new int[4];
 
     //access to lights at intersection through intersection object
     Intersection i;
-    Timer t = new Timer();
-
-
+    PoissonDistribution p;
+    static Random rand = new Random();
 
     //Constructors
+    Lane() {};
     Lane(Intersection intersection) {
         i = intersection;
     }
 
     //General methods
-    //Returns total number of vehicle objects held in the lanes
     public int totalCapacity() {
         return this.leftTurn.size() + this.laneOne.size() + this.laneTwo.size() + this.rightTurn.size();
     }
-
-    //returns specific number of vehicles in each lane
     public void totalVehicles() {
         int m = 0, c = 0, t = 0;
         //if queues are not empty, iterate through and parse total number of vehicles
@@ -86,9 +84,8 @@ public class Lane {
         }
         System.out.println("this direction of travel has: " +m+ " Motorcycles, "+c+" Cars, and "+t+" Large Trucks.");
     }
-
-    //computes size of each lane from left turn -> right turn, returns it as an array
-    public int[] updateSize (int[] s) {
+    public int[] size () {
+        int[] s = new int[4];
         int size = 0;
         for(Vehicle v: leftTurn) {
             size += v.getSize();
@@ -114,14 +111,39 @@ public class Lane {
         s[3] = size;
         return s;
     }
-
-
-    //Converts the cars per hour to cars per minute as a whole number
-    private static int hourToMinuteRate(int c) {
-        return Math.round(((float)c) / 60.0f);
+    public int[] getSize() {
+        return size;
     }
 
-    //calculates the average traffic between passed start/end time
+    //generates a random carPerMinute rate based on the start/end time, avoids a deadlock in generate method
+    private static int hourToMinuteRate(char d, int start, int end) {
+        int cars = 0;
+        switch (d) {
+            case 'n' -> {
+                for (int i = start; i <= end; i++) {
+                    cars += BFERRY[0][i];
+                }
+            }
+            case 's' -> {
+                for (int i = start; i <= end; i++) {
+                    cars += BFERRY[1][i];
+                }
+            }
+            case 'e' -> {
+                for (int i = start; i <= end; i++) {
+                    cars += SR92[0][i];
+                }
+            }
+            case 'w' -> {
+                for (int i = start; i <= end; i++) {
+                    cars += SR92[1][i];
+                }
+            }
+        }
+        cars = cars / (end - start);
+        cars = rand.nextInt((int)(cars * .80), (int)(cars * 1.2) + 1);
+        return cars / 60;
+    }
     private static double getLambda(char d, int start, int end) {
         //sums the total cars over each hour based on direction
         double sum = 0;
@@ -162,22 +184,71 @@ public class Lane {
     }
 
     //car generator for lanes
-    public void generate (int cars, int start, int end, char d) {
-        int carsPerMinute = hourToMinuteRate(cars);
-        //creates poisson object with apache libraries, stores calculated mean
-        PoissonDistribution p = new PoissonDistribution(getLambda(d, start, end));
+    public void generate (char d, int start, int end) {
+        int carsPerMinute = hourToMinuteRate(d, start, end);
+        size = size();
+        double chance = rand.nextDouble();
+        //creates poisson object with apache libraries, stores calculated probability
+        p = new PoissonDistribution(getLambda(d, start, end));
+        double poisson = p.probability(carsPerMinute);
 
-        //calculates rounded poisson probability
-        int poisson = (int)(p.probability(carsPerMinute) * 100);
-
-        //works to generate vehicle objects
-        //array to store changing size of each lane
-        int[] sizes = new int[4];
-        for(int i = 0; i < cars; i++) {
-
+        //1 minute = 1 second
+        //artificial wait for poisson, poisson doubles as well
+        while(chance > poisson) {
+            try {
+                Thread.sleep(1000);
+                chance = rand.nextDouble();
+                poisson = poisson * 2;
+            } catch (InterruptedException e) {
+                System.out.print("Your timer has messed up!");
+            }
         }
-        //now that poisson has been calculated, begin creating cars and dispersing them to the lanes.
-        //weight the turn lanes to be less than the main lanes of travel
-    }
 
+        //Car generator
+        for(int i = 0; i < carsPerMinute; i++) {
+            chance = rand.nextDouble();
+            Vehicle v;
+            //values based on USDOT vehicle statistics
+            if(chance < 0.948676) {
+                //generate car
+                v = new Car(2,1.7f);
+
+            }
+            else if(chance > .948676 && chance < .986998) {
+                //generate motorcycle
+                v = new Motorcycle(1,3.5f);
+            }
+            else {
+                //generate truck
+                v = new Truck(3, .5f);
+            }
+
+            //straight
+            if(rand.nextDouble() < .75) {
+                if(size[1] < size[2]) {
+                    //if lane 1 is longer than lane 2, send car to lane 2
+                    laneOne.add(v);
+                }
+                else {
+                    //if lane 2 is longer than lane 1, send car to lane 1
+                    laneTwo.add(v);
+                }
+                size = size();
+            }
+            //turning
+            else {
+                //arbitrary lane decider
+                if(rand.nextDouble() < .5) {
+                    leftTurn.add(v);
+                }
+                else {
+                    rightTurn.add(v);
+                }
+                size = size();
+            }
+        }
+    }
+    public void leave () {
+        //Pulls cars out of the lanes while light is green
+    }
 }

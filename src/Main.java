@@ -33,15 +33,30 @@ public class Main {
         Lane south = new Lane(intersection);
         Lane west = new Lane(intersection);
         Lane east = new Lane(intersection);
+        int[] sSize = new int[4];
+        int[] nSize = new int[4];
 
-        System.out.print("What hour would you like to start monitoring? (choose an hour incremented time 0-23)");
-        int start = in.nextInt();
-        System.out.println("What hour would you like to stop monitoring on? (choose an hour increment greater than your start time)");
-        int end = in.nextInt();
 
         //the random generation will depend on the hours chosen.
+        south.generate('s', 6, 9);
+        north.generate('n',6, 9);
 
-        north.generate(480,5, 8, 'n');
+        south.totalVehicles();
+        north.totalVehicles();
+
+        sSize = south.size();
+        nSize = north.size();
+
+        for (int k : sSize) {
+            System.out.print(k + " ");
+        }
+        System.out.println();
+        for (int j : nSize) {
+            System.out.print(j + " ");
+        }
+
+
+        //will call light algo here
 
 
 
