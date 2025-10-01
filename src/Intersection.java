@@ -7,6 +7,21 @@ public class Intersection {
     Boolean east;
     Boolean west;
 
+    /*
+    intersection sizing based on the United States Highway standard of
+    12 ft per lane of travel. there are 6 lanes of travel total in each direction,
+    as well as a shoulder (standardized 4 ft).
+     */
+    final int LENGHT = 6 * 12 + 4;
+
+    //because 1 second = 1 minute, ~17 ms = 1 second in my model
+    int secondMod = 17;
+
+    //initial cycleLength will be 30 seconds for first light cycle;
+    int cycleLength = 510;
+
+    int cycles = 0;
+
     //default constructor
     Intersection() {
         north = false;
@@ -33,11 +48,14 @@ public class Intersection {
     public boolean getEastWestLight() {
         return east;
     }
+    public void incrementCycle() {
+        cycles++;
+    }
 
 
-    //Light cycle algorithm (Green split?) takes all lane sizes in, factors to set light
+    //Light cycle algorithm (green split) takes all lane sizes in, factors to set light
     public void greenSplit(int[] n, int[] s, int[] e, int[] w) {
-       //hardcoded as the size arrays will always be in the same format. Gathers size of straight moving lanes
+        //hardcoded as the size arrays will always be in the same format. Gathers size of straight moving lanes
         int eastWest = e[1] + e[2] + w[1] + w[2];
         int northSouth = n[1] + n[2] + s[1] + s[2];
 

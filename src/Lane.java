@@ -6,7 +6,7 @@ import java.util.Queue;
 import java.util.Random;
 
 public class Lane {
-   //Real world data for Bells Ferry/Highway 92 traffic; December 2024
+    //Real world data for Bells Ferry/Highway 92 traffic; December 2024
     static final private int[][] SR92 = {
             //East Travel "Average Hourly Volume" from GDOT
             {76, 48, 56, 69, 144, 409, 1124, 1736, 1473, 1249, 1122, 1119, 1145, 1182, 1211, 1244, 1446, 1696, 1336, 745, 512, 374, 249, 120},
@@ -216,7 +216,7 @@ public class Lane {
             }
             else if(chance > .948676 && chance < .986998) {
                 //generate motorcycle
-                v = new Motorcycle(1,3.5f);
+                v = new Motorcycle();
             }
             else {
                 //generate truck
