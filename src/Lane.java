@@ -27,21 +27,53 @@ public class Lane {
     Queue<Vehicle> laneTwo = new LinkedList<>();
     Queue<Vehicle> rightTurn = new LinkedList<>();
     int[] size = new int[4];
-
+    String direction;
     //access to lights at intersection through intersection object
     Intersection i;
     PoissonDistribution p;
     static Random rand = new Random();
 
     //Constructors
-    Lane() {};
-    Lane(Intersection intersection) {
+    Lane(Intersection intersection, char d) {
+       switch (d) {
+           case 'n' -> direction = "North";
+
+           case 's' -> direction = "South";
+
+           case 'e' -> direction = "East";
+
+           case 'w' -> direction = "West";
+       }
         i = intersection;
     }
 
     //General methods
-    public int totalCapacity() {
-        return this.leftTurn.size() + this.laneOne.size() + this.laneTwo.size() + this.rightTurn.size();
+    public String getdirection() {
+        return direction;
+    }
+    public int[] laneTotal() {
+        int[] cap = new int[4];
+        if(!leftTurn.isEmpty()) {
+            for(Vehicle v: leftTurn) {
+                cap[0]++;
+            }
+        }
+        if(!laneOne.isEmpty()) {
+            for(Vehicle v: laneOne) {
+                cap[1]++;
+            }
+        }
+        if(!laneTwo.isEmpty()) {
+            for(Vehicle v: laneTwo) {
+                cap[2]++;
+            }
+        }
+        if(!rightTurn.isEmpty()) {
+            for(Vehicle v: rightTurn) {
+                cap[3]++;
+            }
+        }
+        return cap;
     }
     public void totalVehicles() {
         int m = 0, c = 0, t = 0;
@@ -82,7 +114,7 @@ public class Lane {
                 }
             }
         }
-        System.out.println("this direction of travel has: " +m+ " Motorcycles, "+c+" Cars, and "+t+" Large Trucks.");
+        System.out.println(direction + " lane has: " +m+ " Motorcycles, "+c+" Cars, and "+t+" Large Trucks.");
     }
     public int[] size () {
         int[] s = new int[4];
@@ -112,6 +144,7 @@ public class Lane {
         return s;
     }
 
+
     //generates a random carPerMinute rate based on the start/end time, avoids a deadlock by maintaining a realistic car arrival process for the given time.
     private static int hourToMinuteRate(char d, int start, int end) {
         int cars = 0;
@@ -137,8 +170,11 @@ public class Lane {
                 }
             }
         }
-        //need to bug fix
-        cars = cars / (end - start);
+
+        if(end - start > 0) {
+            cars = cars / (end - start);
+        }
+
         cars = rand.nextInt((int)(cars * .80), (int)(cars * 1.2) + 1);
         return cars / 60;
     }
@@ -203,7 +239,7 @@ public class Lane {
         }
 
         //Car generator
-        for(int i = 0; i < carsPerMinute; i++) {
+        for(int i = 0; i < carsPerMinute * 60; i++) {
             chance = rand.nextDouble();
             Vehicle v;
             //values based on USDOT vehicle statistics
@@ -245,7 +281,39 @@ public class Lane {
             size = size();
         }
     }
-    public void leave () {
-        //Pulls cars out of the lanes while light is green
+    public void leave (int dimension, int cycle) {
+        //takes size of intersection, calculates how many cars can go through for each lane
+        int throughput = 0;
+        int left = 0;
+        int right = 0;
+        Vehicle veh;
+        while(cycle > 0 && !laneOne.isEmpty()) {
+            while (throughput < dimension && (left != laneOne.size())) {
+                for (Vehicle v : laneOne) {
+                    throughput += v.getSize();
+                    left++;
+                }
+            }
+
+            throughput = 0;
+            while (throughput < dimension && (right != laneTwo.size())) {
+                for (Vehicle v : laneTwo) {
+                    throughput += v.getSize();
+                    right++;
+                }
+            }
+            //uses cycle to measure how many cars will be let through, if there are any cars
+            for(int i = 0; i < left; i++) {
+
+                veh = laneOne.remove();
+
+                if(!laneTwo.isEmpty()) {
+                    laneTwo.remove();
+                    right--;
+                }
+
+                cycle -= veh.timeToCross(dimension);
+            }
+        }
     }
 }

@@ -18,10 +18,12 @@ public class Vehicle {
     public int getSize() {
         return size;
     }
-    //returns the time to cross a given dimension using an acceleration in ft/s/s
+    //returns the time to cross a given dimension (in seconds) using an acceleration in ft/s/s
+    //because 1 second = 1 minute, ~17 ms = 1 second in my model
+    int secondMod = 17;
     public double timeToCross(int dimension) {
         double partial = (2 * dimension) / accel;
-        return Math.sqrt(partial);
+        return Math.sqrt(partial) * secondMod;
     }
 }
 

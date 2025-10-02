@@ -29,57 +29,103 @@ public class Main {
 
         //Creates Lanes and an intersection
         Intersection intersection = new Intersection();
-        Lane north = new Lane(intersection);
-        Lane south = new Lane(intersection);
-        Lane west = new Lane(intersection);
-        Lane east = new Lane(intersection);
+        Lane north = new Lane(intersection, 'n');
+        Lane south = new Lane(intersection, 's');
+        Lane west = new Lane(intersection, 'w');
+        Lane east = new Lane(intersection, 'e');
         int[] sSize;
         int[] nSize;
         int[] eSize;
         int[] wSize;
 
+        System.out.print("At what hour would you like to start your simulation? ");
+        int start = in.nextInt();
+        System.out.print("At what hour would you like to end your simulation? ");
+        int end = in.nextInt();
+
+        int num = 1;
 
         //the random generation will depend on the hours chosen.
-        south.generate('s', 6, 9);
-        north.generate('n',6, 9);
-        east.generate('e', 6, 9);
-        west.generate('w', 6, 9);
-
-        south.totalVehicles();
-        north.totalVehicles();
-        east.totalVehicles();
-        west.totalVehicles();
-
-        sSize = south.size();
-        nSize = north.size();
-        eSize = east.size();
-        wSize = west.size();
-
-        for (int k : sSize) {
-            System.out.print(k + " ");
-        }
-        System.out.println();
-        for (int j : nSize) {
-            System.out.print(j + " ");
-        }
-        System.out.println();
-        for (int k : eSize) {
-            System.out.print(k + " ");
-        }
-        System.out.println();
-        for (int k : wSize) {
-            System.out.print(k + " ");
+        if(end - start > 0) {
+            num = end - start;
         }
 
+        for(int i = 0; i < num; i++) {
+            System.out.println("\nhour "+ (i + 1) +" loading....");
+            south.generate('s', start, end);
+            north.generate('n',start, end);
+            east.generate('e', start, end);
+            west.generate('w', start, end);
 
-        //will call light algo here
-        double[] splits = intersection.greenSplit(nSize, sSize, eSize, wSize);
+            sSize = south.size();
+            nSize = north.size();
+            eSize = east.size();
+            wSize = west.size();
 
-        System.out.println();
-        for (double k : splits) {
-            System.out.print(k + " ");
+            System.out.println("\n\nARRIVING");
+            north.totalVehicles();
+            for (int j : nSize) {
+                System.out.print(j + " ");
+            }
+
+            System.out.println();
+            south.totalVehicles();
+            for (int j : sSize) {
+                System.out.print(j + " ");
+            }
+
+            System.out.println();
+            east.totalVehicles();
+            for (int j : eSize) {
+                System.out.print(j + " ");
+            }
+
+            System.out.println();
+            west.totalVehicles();
+            for (int j : wSize) {
+                System.out.print(j + " ");
+            }
+
+            //gets green splits. NS, EW
+            double[] splits = intersection.greenSplit(nSize, sSize, eSize, wSize);
+
+            //moves cars through the lane
+            north.leave(intersection.getDimension(), (int)(intersection.getCycleLength() * splits[0]));
+            south.leave(intersection.getDimension(), (int)(intersection.getCycleLength() * splits[0]));
+            east.leave(intersection.getDimension(), (int)(intersection.getCycleLength() * splits[1]));
+            west.leave(intersection.getDimension(), (int)(intersection.getCycleLength() * splits[1]));
+
+
+            sSize = south.size();
+            nSize = north.size();
+            eSize = east.size();
+            wSize = west.size();
+
+            System.out.println("\n\n LEAVING");
+            System.out.println("North/South Green-Split value: " +splits[0]+", East/West Green-Split value: "+splits[1]);
+            north.totalVehicles();
+            for (int j : nSize) {
+                System.out.print(j + " ");
+            }
+
+            System.out.println();
+            south.totalVehicles();
+            for (int j : sSize) {
+                System.out.print(j + " ");
+            }
+
+            System.out.println();
+            east.totalVehicles();
+            for (int j : eSize) {
+                System.out.print(j + " ");
+            }
+
+            System.out.println();
+            west.totalVehicles();
+            for (int j : wSize) {
+                System.out.print(j + " ");
+            }
+            System.out.println();
         }
-
-
     }
 }
