@@ -33,19 +33,27 @@ public class Main {
         Lane south = new Lane(intersection);
         Lane west = new Lane(intersection);
         Lane east = new Lane(intersection);
-        int[] sSize = new int[4];
-        int[] nSize = new int[4];
+        int[] sSize;
+        int[] nSize;
+        int[] eSize;
+        int[] wSize;
 
 
         //the random generation will depend on the hours chosen.
         south.generate('s', 6, 9);
         north.generate('n',6, 9);
+        east.generate('e', 6, 9);
+        west.generate('w', 6, 9);
 
         south.totalVehicles();
         north.totalVehicles();
+        east.totalVehicles();
+        west.totalVehicles();
 
         sSize = south.size();
         nSize = north.size();
+        eSize = east.size();
+        wSize = west.size();
 
         for (int k : sSize) {
             System.out.print(k + " ");
@@ -54,11 +62,23 @@ public class Main {
         for (int j : nSize) {
             System.out.print(j + " ");
         }
+        System.out.println();
+        for (int k : eSize) {
+            System.out.print(k + " ");
+        }
+        System.out.println();
+        for (int k : wSize) {
+            System.out.print(k + " ");
+        }
 
 
         //will call light algo here
+        double[] splits = intersection.greenSplit(nSize, sSize, eSize, wSize);
 
-
+        System.out.println();
+        for (double k : splits) {
+            System.out.print(k + " ");
+        }
 
 
     }

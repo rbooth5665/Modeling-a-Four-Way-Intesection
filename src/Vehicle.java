@@ -25,7 +25,6 @@ public class Vehicle {
     }
 }
 
-
 //Liberties will be taken with size and acceleration,
 // as there is not a standardized length or acceleration for vehicles.
 class Motorcycle extends Vehicle {
@@ -39,21 +38,22 @@ class Motorcycle extends Vehicle {
     }
 }
 class Truck extends Vehicle {
-    Truck (){}
-    Truck (int s, float a) {
+    Truck () {
         this.type = "Truck";
-        //with a standard trailer length (53ft), semis peak at 80 ft long
+        //with a standard trailer length (53ft), semis average ~80 ft long
         //a normal box truck has ~10 ft worth of bed, + the length of the cab.
         this.size = rand.nextInt(18, 81);
         //acceleration for semi truck -> box truck
-        this.accel = rand.nextInt(1, 4) + rand.nextDouble();;
+        this.accel = rand.nextInt(1, 4) + rand.nextDouble();
     }
 }
 class Car extends Vehicle {
-    Car (){}
-    Car (int s, float a) {
+    Car () {
         this.type = "Car";
-        this.size = s;
-        this.accel = a;
+        //smart cars are ~8ft, longest consumer car is ~22
+        this.size = rand.nextInt(8, 22);
+        //The Mitsubishi mirage ranks as the worlds slowest production car with 1.06 ft/s/s acceleration (actually)
+        //The Rimac Nevera ranks as one of the fastest production accelerations at ~34.5 ft/s/s
+        this.accel = rand.nextInt(1, 34) + rand.nextDouble();
     }
 }

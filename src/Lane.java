@@ -111,11 +111,8 @@ public class Lane {
         s[3] = size;
         return s;
     }
-    public int[] getSize() {
-        return size;
-    }
 
-    //generates a random carPerMinute rate based on the start/end time, avoids a deadlock in generate method
+    //generates a random carPerMinute rate based on the start/end time, avoids a deadlock by maintaining a realistic car arrival process for the given time.
     private static int hourToMinuteRate(char d, int start, int end) {
         int cars = 0;
         switch (d) {
@@ -140,6 +137,7 @@ public class Lane {
                 }
             }
         }
+        //need to bug fix
         cars = cars / (end - start);
         cars = rand.nextInt((int)(cars * .80), (int)(cars * 1.2) + 1);
         return cars / 60;
@@ -211,7 +209,7 @@ public class Lane {
             //values based on USDOT vehicle statistics
             if(chance < 0.948676) {
                 //generate car
-                v = new Car(2,1.7f);
+                v = new Car();
 
             }
             else if(chance > .948676 && chance < .986998) {
@@ -220,7 +218,7 @@ public class Lane {
             }
             else {
                 //generate truck
-                v = new Truck(3, .5f);
+                v = new Truck();
             }
 
             //straight
@@ -233,7 +231,6 @@ public class Lane {
                     //if lane 2 is longer than lane 1, send car to lane 1
                     laneTwo.add(v);
                 }
-                size = size();
             }
             //turning
             else {
@@ -244,8 +241,8 @@ public class Lane {
                 else {
                     rightTurn.add(v);
                 }
-                size = size();
             }
+            size = size();
         }
     }
     public void leave () {
