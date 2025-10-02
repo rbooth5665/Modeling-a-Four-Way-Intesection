@@ -50,6 +50,8 @@ public class Main {
             num = end - start;
         }
 
+        //Because my lanes have not been mult-threaded yet, the interface looks a bit different, and is generating an hourly report.
+        // I aim to make it fully real time by the end of the course.
         for(int i = 0; i < num; i++) {
             System.out.println("\nhour "+ (i + 1) +" loading....");
             south.generate('s', start, end);

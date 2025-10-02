@@ -35,15 +35,15 @@ public class Lane {
 
     //Constructors
     Lane(Intersection intersection, char d) {
-       switch (d) {
-           case 'n' -> direction = "North";
+        switch (d) {
+            case 'n' -> direction = "North";
 
-           case 's' -> direction = "South";
+            case 's' -> direction = "South";
 
-           case 'e' -> direction = "East";
+            case 'e' -> direction = "East";
 
-           case 'w' -> direction = "West";
-       }
+            case 'w' -> direction = "West";
+        }
         i = intersection;
     }
 
@@ -311,8 +311,12 @@ public class Lane {
                     laneTwo.remove();
                     right--;
                 }
+                //if cars can move straight, it is a protected right turn
+                if(!rightTurn.isEmpty()) {
+                    rightTurn.remove();
+                }
 
-                cycle -= veh.timeToCross(dimension);
+                cycle -= (int) veh.timeToCross(dimension);
             }
         }
     }
