@@ -27,6 +27,8 @@ public class Lane {
     Queue<Vehicle> laneTwo = new LinkedList<>();
     Queue<Vehicle> rightTurn = new LinkedList<>();
     int[] size = new int[4];
+    int departure = 0;
+    double speed = 0;
     String direction;
     //access to lights at intersection through intersection object
     Intersection i;
@@ -142,6 +144,15 @@ public class Lane {
         }
         s[3] = size;
         return s;
+    }
+    public int getDeparture() {
+        return departure;
+    }
+    public double getSpeed() {
+        if(departure > 0) {
+            return speed/departure;
+        }
+        return speed;
     }
 
 
@@ -306,14 +317,19 @@ public class Lane {
             for(int i = 0; i < left; i++) {
 
                 veh = laneOne.remove();
+                speed += veh.getAccel();
+                departure++;
 
                 if(!laneTwo.isEmpty()) {
-                    laneTwo.remove();
+                    speed += laneTwo.remove().getAccel();
+
                     right--;
+                    departure++;
                 }
                 //if cars can move straight, it is a protected right turn
                 if(!rightTurn.isEmpty()) {
-                    rightTurn.remove();
+                    speed += rightTurn.remove().getAccel();
+                    departure++;
                 }
 
                 cycle -= (int) veh.timeToCross(dimension);
