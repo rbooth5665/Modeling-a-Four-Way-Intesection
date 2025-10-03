@@ -1,6 +1,5 @@
 package org.example;
 
-import java.util.Random;
 import java.util.Scanner;
 
 /*
@@ -24,7 +23,6 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] arg) {
         //General objects
-        Random rand = new Random();
         Scanner in = new Scanner(System.in);
 
         //Creates Lanes and an intersection
@@ -50,7 +48,7 @@ public class Main {
             num = end - start;
         }
 
-        //Because my lanes have not been mult-threaded yet, the interface looks a bit different, and is generating an hourly report.
+        //Because my lanes have not been multithreaded yet, the interface looks a bit different, and is generating an hourly report.
         // I aim to make it fully real time by the end of the course.
         for(int i = 0; i < num; i++) {
             System.out.println("\nhour "+ (i + 1) +" loading....");
@@ -105,25 +103,34 @@ public class Main {
 
             System.out.println("\n\n LEAVING");
             System.out.println("North/South Green-Split value: " +splits[0]+", East/West Green-Split value: "+splits[1]);
+
             north.totalVehicles();
+            System.out.println(north.getDeparture() + " vehicles have left the northbound lanes with an average acceleration of " + Math.round(north.getSpeed() * 100)/100+". " +
+                                                        "There is an average of "+ north.getDeparture()/num +" cars per hour");
             for (int j : nSize) {
                 System.out.print(j + " ");
             }
 
             System.out.println();
             south.totalVehicles();
+            System.out.println(south.getDeparture() + " vehicles have left the southbound lanes with an average acceleration of " + Math.round(south.getSpeed() * 100)/100 +
+                                                        "There is an average of "+ south.getDeparture()/num +" cars per hour");
             for (int j : sSize) {
                 System.out.print(j + " ");
             }
 
             System.out.println();
             east.totalVehicles();
+            System.out.println(east.getDeparture() + " vehicles have left the eastbound lanes with an average acceleration of " + Math.round(east.getSpeed() * 100)/100 +
+                                                        "There is an average of "+ east.getDeparture()/num +" cars per hour");
             for (int j : eSize) {
                 System.out.print(j + " ");
             }
 
             System.out.println();
             west.totalVehicles();
+            System.out.println(west.getDeparture() + " vehicles have left the westbound lanes with an average acceleration of " +Math.round(west.getSpeed() * 100)/100 +
+                                                    "There is an average of "+ west.getDeparture()/num +" cars per hour");
             for (int j : wSize) {
                 System.out.print(j + " ");
             }
