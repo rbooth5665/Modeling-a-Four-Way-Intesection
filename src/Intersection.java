@@ -31,16 +31,41 @@ public class Intersection {
     }
 
 
+
+    //saturation flows for east/west and north/south will be static
+    //according to the HCM (highway capacity manual),
+    //the base saturation flow of an intersection is 1900 cars per hour per lane.
+    /*
+                                    ew          sn
+    lane width =  Standard          1           1
+    heavy vehicles = 1.4%           .986        .986
+    grade = flat/hill               1           .97
+    pedestrians =  none/minor       1           .9
+    bus blockage = Occasional       .95         1
+    central business district = n/y 1           .9
+     */
+    static double ewSaturation = 1900 * 1 * .986 * 1 * 1 * .95 * 1; // ~1779
+    static double nsSaturation = 1900 * 1 * .986 * .97 * .9 * 1 * .9; // ~1471
+
+
+
+
     //implements critical flow ratios
-    public double criticalFlow(int cars) {
+    private static double[] criticalFlow(int cars) {
         //critical flow ratio = v/s where v = actual flow of cars in a phase (vehicles per hour)
         // and s = saturation flow (how many can move through if it was green all the time)
-        return 1.0;
+        //The actual flow of cars will equal the average calculated amount over a given period
+        return new double[] {
+                            cars/ewSaturation,
+                            cars/nsSaturation
+                            };
 
     }
     //implementation of websters formula for finding optimal length of cycle
     public void websters(double cf) {
         //optimal length = (1.5 * time lost) + 5 / 1 - sum of critical flow rations
+        //for simplification, we will assume that all factors of time lost equate to about 3 seconds.
+
 
     }
 

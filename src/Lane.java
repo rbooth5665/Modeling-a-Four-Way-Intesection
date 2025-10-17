@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 
-public class Lane {
+public class Lane extends Thread {
     //Real world data for Bells Ferry/Highway 92 traffic; December 2024
     static final private int[][] SR92 = {
             //East Travel "Average Hourly Volume" from GDOT
@@ -27,13 +27,20 @@ public class Lane {
     Queue<Vehicle> laneTwo = new LinkedList<>();
     Queue<Vehicle> rightTurn = new LinkedList<>();
     int[] size = new int[4];
-    int departure = 0;
-    double speed = 0;
     String direction;
-    //access to lights at intersection through intersection object
-    Intersection i;
     PoissonDistribution p;
     static Random rand = new Random();
+
+    //stat trackers
+    //tracks total number of cars leaving
+    int departure = 0;
+    //tracks total speed
+    double speed = 0;
+    //tracks total time
+    long wait = 0;
+
+    //access to lights at intersection through intersection object
+    Intersection i;
 
     //Constructors
     Lane(Intersection intersection, char d) {
@@ -50,32 +57,23 @@ public class Lane {
     }
 
     //General methods
-    public String getdirection() {
+    public long avgWait() {
+        //returns wait time in milliseconds * 17 to account for my models "seconds"
+        if(departure > 0) {
+            return ((wait / departure) / 1000000) * 17;
+        }
+        return wait;
+    }
+    public String getDirection() {
         return direction;
     }
     public int[] laneTotal() {
-        int[] cap = new int[4];
-        if(!leftTurn.isEmpty()) {
-            for(Vehicle v: leftTurn) {
-                cap[0]++;
-            }
-        }
-        if(!laneOne.isEmpty()) {
-            for(Vehicle v: laneOne) {
-                cap[1]++;
-            }
-        }
-        if(!laneTwo.isEmpty()) {
-            for(Vehicle v: laneTwo) {
-                cap[2]++;
-            }
-        }
-        if(!rightTurn.isEmpty()) {
-            for(Vehicle v: rightTurn) {
-                cap[3]++;
-            }
-        }
-        return cap;
+        return new int[]{
+        leftTurn.size(),
+        laneOne.size(),
+        laneTwo.size(),
+        rightTurn.size()
+            };
     }
     public void totalVehicles() {
         int m = 0, c = 0, t = 0;
@@ -157,25 +155,25 @@ public class Lane {
 
 
     //generates a random carPerMinute rate based on the start/end time, avoids a deadlock by maintaining a realistic car arrival process for the given time.
-    private static int hourToMinuteRate(char d, int start, int end) {
+    private static int hourToMinuteRate(String d, int start, int end) {
         int cars = 0;
         switch (d) {
-            case 'n' -> {
+            case "North" -> {
                 for (int i = start; i <= end; i++) {
                     cars += BFERRY[0][i];
                 }
             }
-            case 's' -> {
+            case "South" -> {
                 for (int i = start; i <= end; i++) {
                     cars += BFERRY[1][i];
                 }
             }
-            case 'e' -> {
+            case "East" -> {
                 for (int i = start; i <= end; i++) {
                     cars += SR92[0][i];
                 }
             }
-            case 'w' -> {
+            case "West" -> {
                 for (int i = start; i <= end; i++) {
                     cars += SR92[1][i];
                 }
@@ -189,27 +187,27 @@ public class Lane {
         cars = rand.nextInt((int)(cars * .80), (int)(cars * 1.2) + 1);
         return cars / 60;
     }
-    private static double getLambda(char d, int start, int end) {
+    private static double getLambda(String d, int start, int end) {
         //sums the total cars over each hour based on direction
         double sum = 0;
         double denom = end - start;
         switch (d) {
-            case 'n' -> {
+            case "North" -> {
                 for(int i = start; i <= end; i++) {
                     sum += BFERRY[0][i];
                 }
             }
-            case 's' -> {
+            case "South" -> {
                 for(int i = start; i <= end; i++) {
                     sum += BFERRY[1][i];
                 }
             }
-            case 'e' -> {
+            case "East" -> {
                 for(int i = start; i <= end; i++) {
                     sum += SR92[0][i];
                 }
             }
-            case 'w' -> {
+            case "West" -> {
                 for(int i = start; i <= end; i++) {
                     sum += SR92[1][i];
                 }
@@ -229,12 +227,12 @@ public class Lane {
     }
 
     //car generator for lanes
-    public void generate (char d, int start, int end) {
-        int carsPerMinute = hourToMinuteRate(d, start, end);
+    public void generate (int start, int end) {
+        int carsPerMinute = hourToMinuteRate(direction, start, end);
         size = size();
         double chance = rand.nextDouble();
         //creates poisson object with apache libraries, stores calculated probability
-        p = new PoissonDistribution(getLambda(d, start, end));
+        p = new PoissonDistribution(getLambda(direction, start, end));
         double poisson = p.probability(carsPerMinute);
 
         //1 minute = 1 second
@@ -292,13 +290,31 @@ public class Lane {
             size = size();
         }
     }
-    public void leave (int dimension, int cycle) {
+
+    //removes cars from lanes
+    public void leave (int dimension, int cycleTime) {
         //takes size of intersection, calculates how many cars can go through for each lane
         int throughput = 0;
         int left = 0;
         int right = 0;
         Vehicle veh;
-        while(cycle > 0 && !laneOne.isEmpty()) {
+
+        //The left turn arrow will get 10% of the total cycle time
+        int leftTime = (int)(cycleTime * .10);
+        cycleTime -= leftTime;
+        
+        //protected left turns
+        while(leftTime > 0 && !leftTurn.isEmpty()) {
+            veh = leftTurn.peek();
+            leftTime -= (int)veh.timeToCross(dimension);
+
+            speed += leftTurn.remove().getAccel();
+            departure++;
+        }
+
+        //while there is still time left for the green light cycle
+        while(cycleTime > 0 && (!laneOne.isEmpty() || !laneTwo.isEmpty())) {
+            //determines how many cars can be in the intersection from the left lane
             while (throughput < dimension && (left != laneOne.size())) {
                 for (Vehicle v : laneOne) {
                     throughput += v.getSize();
@@ -306,6 +322,7 @@ public class Lane {
                 }
             }
 
+            //determines how many cars can be in the intersection from the right lane
             throughput = 0;
             while (throughput < dimension && (right != laneTwo.size())) {
                 for (Vehicle v : laneTwo) {
@@ -313,26 +330,36 @@ public class Lane {
                     right++;
                 }
             }
-            //uses cycle to measure how many cars will be let through, if there are any cars
-            for(int i = 0; i < left; i++) {
 
-                veh = laneOne.remove();
-                speed += veh.getAccel();
-                departure++;
+            //determines which lane has more potential cars in the intersection
+            int t = Math.max(left, right);
+
+            //passes cars through intersection, continues to calculate while cycleTime > 0
+            for(int i = 0; i < t; i++) {
+                if (!laneOne.isEmpty()) {
+                    veh = laneOne.peek();
+                    cycleTime -= (int)veh.timeToCross(dimension);
+
+                    wait += System.nanoTime() - veh.getTime();
+                    speed += laneOne.remove().getAccel();
+                    departure++;
+                }
 
                 if(!laneTwo.isEmpty()) {
-                    speed += laneTwo.remove().getAccel();
+                    veh = laneTwo.peek();
 
-                    right--;
+                    wait += System.nanoTime() - veh.getTime();
+                    speed += laneTwo.remove().getAccel();
                     departure++;
                 }
                 //if cars can move straight, it is a protected right turn
                 if(!rightTurn.isEmpty()) {
+                    veh = rightTurn.peek();
+
+                    wait += System.nanoTime() - veh.getTime();
                     speed += rightTurn.remove().getAccel();
                     departure++;
                 }
-
-                cycle -= (int) veh.timeToCross(dimension);
             }
         }
     }
