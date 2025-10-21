@@ -22,8 +22,10 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] arg) {
-        //General objects
+        //General objects, system time capture
         Scanner in = new Scanner(System.in);
+        long startTime = System.nanoTime()/ 1000000000;
+
 
         //Creates Lanes and an intersection
         Intersection intersection = new Intersection();
@@ -36,6 +38,41 @@ public class Main {
         int[] eSize;
         int[] wSize;
 
+        //directional averages
+        double n = 60 * north.getLambda(north.getDirection(), 6, 6);
+        double s = 60 * south.getLambda(south.getDirection(), 6, 6);
+
+        int nsAvg = (int)(n + s) /2;
+
+        double e = 60 * east.getLambda(east.getDirection(), 6, 9);
+        double w = 60 * west.getLambda(west.getDirection(), 6, 9);
+
+        int ewAvg = (int)(e + w) /2;
+
+        System.out.println(nsAvg +", " + ewAvg);
+        intersection.optimizePhase(ewAvg, nsAvg);
+        System.out.println(intersection.getewPhaseLength() +", "+ intersection.getnsPhaseLength());
+
+
+
+        //takes capture of when the simulation stops running
+        long endTime = System.nanoTime() / 1000000000;
+        long totalTime = (endTime - startTime);
+        convertTime(totalTime);
+    }
+
+
+    public static void convertTime(long time) {
+        int minutes = 0;
+        while(time >= 60) {
+            minutes++;
+            time -= 60;
+        }
+        System.out.println(minutes +" minute(s) "+time+" second(s)");
+    }
+}
+
+/*
         System.out.print("At what hour would you like to start your simulation? ");
         int start = in.nextInt();
         System.out.print("At what hour would you like to end your simulation? ");
@@ -52,10 +89,10 @@ public class Main {
         // I aim to make it fully real time by the end of the course.
         for(int i = 0; i < num; i++) {
             System.out.println("\nhour "+ (i + 1) +" loading....");
-            south.generate('s', start, end);
-            north.generate('n',start, end);
-            east.generate('e', start, end);
-            west.generate('w', start, end);
+            south.generate(start, end);
+            north.generate(start, end);
+            east.generate(start, end);
+            west.generate(start, end);
 
             sSize = south.size();
             nSize = north.size();
@@ -136,5 +173,4 @@ public class Main {
             }
             System.out.println();
         }
-    }
-}
+ */

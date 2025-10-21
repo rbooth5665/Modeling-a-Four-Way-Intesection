@@ -42,7 +42,7 @@ class Motorcycle extends Vehicle {
         //grom acceleration = 6.77ft/s/s s1000rr acceleration = 46.5 ft/s/s
         //Acceleration can be anywhere between these 2 values
         this.accel = rand.nextInt(6, 46) + rand.nextDouble();
-        time = System.nanoTime();
+        this.time = System.nanoTime();
     }
 }
 class Truck extends Vehicle {
@@ -53,7 +53,7 @@ class Truck extends Vehicle {
         this.size = rand.nextInt(18, 81);
         //acceleration for semi truck -> box truck
         this.accel = rand.nextInt(1, 4) + rand.nextDouble();
-        time = System.nanoTime();
+        this.time = System.nanoTime();
     }
 }
 class Car extends Vehicle {
@@ -64,6 +64,6 @@ class Car extends Vehicle {
         //The Mitsubishi mirage ranks as the worlds slowest production car with 1.06 ft/s/s acceleration (actually)
         //The Rimac Nevera ranks as one of the fastest production accelerations at ~34.5 ft/s/s
         this.accel = rand.nextInt(1, 34) + rand.nextDouble();
-        time = System.nanoTime();
+        this.time = System.nanoTime();
     }
 }

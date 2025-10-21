@@ -1,5 +1,4 @@
 package org.example;
-
 import org.apache.commons.math3.distribution.PoissonDistribution;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -20,7 +19,6 @@ public class Lane extends Thread {
             {82, 50, 38, 55, 126, 308, 672, 941, 876, 754, 690, 685, 772, 820, 912, 986, 1126, 1152, 1064, 858, 592, 450, 246, 156}
     };
 
-
     //handles the specific lane queues
     Queue<Vehicle> leftTurn = new LinkedList<>();
     Queue<Vehicle> laneOne = new LinkedList<>();
@@ -31,12 +29,9 @@ public class Lane extends Thread {
     PoissonDistribution p;
     static Random rand = new Random();
 
-    //stat trackers
-    //tracks total number of cars leaving
+    //data tracking
     int departure = 0;
-    //tracks total speed
     double speed = 0;
-    //tracks total time
     long wait = 0;
 
     //access to lights at intersection through intersection object
@@ -153,8 +148,10 @@ public class Lane extends Thread {
         return speed;
     }
 
-
-    //generates a random carPerMinute rate based on the start/end time, avoids a deadlock by maintaining a realistic car arrival process for the given time.
+    /*
+    generates a random carPerMinute rate based on the start/end time,
+    avoids deadlocking by creating realistic upper and lower generation bounds
+     */
     private static int hourToMinuteRate(String d, int start, int end) {
         int cars = 0;
         switch (d) {
@@ -187,7 +184,7 @@ public class Lane extends Thread {
         cars = rand.nextInt((int)(cars * .80), (int)(cars * 1.2) + 1);
         return cars / 60;
     }
-    private static double getLambda(String d, int start, int end) {
+    public double getLambda(String d, int start, int end) {
         //sums the total cars over each hour based on direction
         double sum = 0;
         double denom = end - start;
@@ -227,16 +224,16 @@ public class Lane extends Thread {
     }
 
     //car generator for lanes
-    public void generate (int start, int end) {
+    public void generate (double lam, int start, int end) {
         int carsPerMinute = hourToMinuteRate(direction, start, end);
         size = size();
         double chance = rand.nextDouble();
         //creates poisson object with apache libraries, stores calculated probability
-        p = new PoissonDistribution(getLambda(direction, start, end));
+        p = new PoissonDistribution(lam);
         double poisson = p.probability(carsPerMinute);
 
         //1 minute = 1 second
-        //artificial wait for poisson, poisson doubles as well
+        //artificial wait for poisson
         while(chance > poisson) {
             try {
                 Thread.sleep(1000);
@@ -255,7 +252,6 @@ public class Lane extends Thread {
             if(chance < 0.948676) {
                 //generate car
                 v = new Car();
-
             }
             else if(chance > .948676 && chance < .986998) {
                 //generate motorcycle
