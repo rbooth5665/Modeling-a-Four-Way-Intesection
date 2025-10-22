@@ -1,6 +1,6 @@
 package org.example;
-
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /*
         My simulation will be based on a busy intersection close to my house. This intersection
@@ -18,47 +18,148 @@ import java.util.Scanner;
 
         Bells Ferry Traffic Data
         https://gdottrafficdata.drakewell.com/sitedashboard.asp?node=GDOT_PORTABLES&cosit=0000067_0907
-         */
 
+
+
+        Time Conversions:
+        real world -> simulation time
+        ~17 milli ->  1 second
+        1 second  ->  1 minute
+        1 minute  ->  1 hour
+*/
 public class Main {
     public static void main(String[] arg) {
-        //General objects, system time capture
         Scanner in = new Scanner(System.in);
-        long startTime = System.nanoTime()/ 1000000000;
+
+        //Creates thread safe lane queues to be managed. Initialized here to be manipulated by the lane and intersection classes
+        ConcurrentLinkedQueue<Vehicle> nLeftTurn = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> nRightTurn = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> nStraight1 = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> nStraight2 = new ConcurrentLinkedQueue<>();
+
+        ConcurrentLinkedQueue<Vehicle> sLeftTurn = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> sRightTurn = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> sStraight1 = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> sStraight2 = new ConcurrentLinkedQueue<>();
+
+        ConcurrentLinkedQueue<Vehicle> eLeftTurn = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> eRightTurn = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> eStraight1 = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> eStraight2 = new ConcurrentLinkedQueue<>();
+
+        ConcurrentLinkedQueue<Vehicle> wLeftTurn = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> wRightTurn = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> wStraight1 = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<Vehicle> wStraight2 = new ConcurrentLinkedQueue<>();
+
+        //takes start and end times from user
+        System.out.println("Which hour would you like to start? (military time 0 - 23)");
+        int start = in.nextInt();
+        System.out.println("Which hour would you like to end? (Military time 0 - 23)");
+        int end = in.nextInt();
+
+        //each lane object will gather direction and shared queues
+        Lane north = new Lane('n', start, end, nLeftTurn, nRightTurn, nStraight1, nStraight2);
+        Thread n = new Thread(north);
+        Lane south = new Lane('s', start, end, sLeftTurn, sRightTurn, sStraight1, sStraight2);
+        Thread s = new Thread(south);
+        Lane east = new Lane('e', start, end, eLeftTurn, eRightTurn, eStraight1, eStraight2);
+        Thread e = new Thread(east);
+        Lane west = new Lane('w', start, end, wLeftTurn, wRightTurn, wStraight1, wStraight2);
+        Thread w = new Thread(west);
+
+        //each intersection object will gather direction and shared queues
+        Intersection nLight = new Intersection('n', (north.getLam() * 60), start, end, nLeftTurn, nRightTurn, nStraight1, nStraight2);
+        Thread nl = new Thread(nLight);
+        Intersection sLight = new Intersection('s', (south.getLam() * 60), start, end, sLeftTurn, sRightTurn, sStraight1, sStraight2);
+        Thread sl = new Thread(sLight);
+        Intersection eLight = new Intersection('e', (east.getLam() * 60), start, end, eLeftTurn, eRightTurn, eStraight1, eStraight2);
+        Thread el = new Thread(eLight);
+        Intersection wLight = new Intersection('w', (west.getLam() * 60), start, end, wLeftTurn, wRightTurn, wStraight1, wStraight2);
+        Thread wl = new Thread(wLight);
+
+        //calculates the sum of critical flows for websters equations
+        double d = nLight.getcFlow() + sLight.getcFlow() + eLight.getcFlow() + wLight.getcFlow();
+
+        //to determine a full cycle length, get the largest critical flow ratio
+        Intersection.websters(d);
+        int x;
+
+        //optimizes north/south and east/west based on respective largest cFlow values
+        if(nLight.getcFlow() > sLight.getcFlow()) {
+            nLight.optimizePhase(d);
+            sLight.setPhase(nLight.getPhase());
+            x = nLight.getPhase();
+        }
+        else {
+            sLight.optimizePhase(d);
+            nLight.setPhase(sLight.getPhase());
+            x = sLight.getPhase();
+        }
+        //because the cycle length is the total length of all lights, cycle length - x will be the remaining amount of time left for east/west phase
+        eLight.setPhase(Intersection.getCycle() - x);
+        wLight.setPhase(eLight.getPhase());
+
+        //gets start time
+        long startTime = System.nanoTime();
+
+        //Start producers
+        n.start();
+        s.start();
+        e.start();
+        w.start();
+
+        //Start consumers
+        nl.start();
+        sl.start();
+        el.start();
+        wl.start();
 
 
-        //Creates Lanes and an intersection
-        Intersection intersection = new Intersection();
-        Lane north = new Lane(intersection, 'n');
-        Lane south = new Lane(intersection, 's');
-        Lane west = new Lane(intersection, 'w');
-        Lane east = new Lane(intersection, 'e');
-        int[] sSize;
-        int[] nSize;
-        int[] eSize;
-        int[] wSize;
-
-        //directional averages
-        double n = 60 * north.getLambda(north.getDirection(), 6, 6);
-        double s = 60 * south.getLambda(south.getDirection(), 6, 6);
-
-        int nsAvg = (int)(n + s) /2;
-
-        double e = 60 * east.getLambda(east.getDirection(), 6, 9);
-        double w = 60 * west.getLambda(west.getDirection(), 6, 9);
-
-        int ewAvg = (int)(e + w) /2;
-
-        System.out.println(nsAvg +", " + ewAvg);
-        intersection.optimizePhase(ewAvg, nsAvg);
-        System.out.println(intersection.getewPhaseLength() +", "+ intersection.getnsPhaseLength());
-
+        //simulation run time
+        long duration = (end - start + 1) * 60L * 1000000000L;
+        while(System.nanoTime() - startTime < duration) {
+        }
 
 
         //takes capture of when the simulation stops running
-        long endTime = System.nanoTime() / 1000000000;
-        long totalTime = (endTime - startTime);
+        long endTime = System.nanoTime();
+        long totalTime = (endTime - startTime)/1000000000;
+        int[] ns = north.laneTotal();
+        int[] ss = south.laneTotal();
+        int[] es = east.laneTotal();
+        int[] ws=  west.laneTotal();
+        for(int i:ns) {
+            System.out.print(i +" ");
+        }
+        System.out.println();
+        for(int i:ss) {
+            System.out.print(i +" ");
+        }
+        System.out.println();
+        for(int i:es) {
+            System.out.print(i +" ");
+        }
+        System.out.println();
+        for(int i:ws) {
+            System.out.print(i +" ");
+        }
+        System.out.println();
+
+        System.out.println(north.getGenerate() +", "+south.getGenerate()+", "+east.getGenerate()+", "+west.getGenerate());
+        System.out.println(nLight.getDeparture()+" Have travelled north, "+ sLight.getDeparture()+" have travelled south, "+ eLight.getDeparture()+" have travelled east "+ wLight.getDeparture()+" have travelled west");
         convertTime(totalTime);
+
+        n.interrupt();
+        s.interrupt();
+        e.interrupt();
+        w.interrupt();
+
+        nl.interrupt();
+        sl.interrupt();
+        el.interrupt();
+        wl.interrupt();
+
     }
 
 
